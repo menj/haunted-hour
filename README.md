@@ -32,4 +32,5 @@ console.log(window.__hw.state);
 Audio is off until the visitor opts in. Mobile browsers require user interaction to activate Web Audio. With reduced motion enabled, gameplay starts paused.
 
 ## License
-MIT.
+
+GNU General Public License v3.0 (GPL-3.0-only). See [LICENSE](LICENSE).
