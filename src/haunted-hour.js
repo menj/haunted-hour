@@ -13,9 +13,10 @@ function note(freq,duration=.13,when=0,wave='sine',volume=.055){const a=audio();
 function fx(type){if(!state.sound)return;let f={ghost:310,cat:650,pumpkin:160,witch:490,bat:720,skull:220,gold:900}[type];note(f,.18,0,'triangle');note(f*.65,.18,.11,'sine',.035);if(type==='gold')note(f*1.4,.3,.21,'sine')}
 const melody=[220,261.63,311.13,293.66,220,196,174.61,196,233.08,261.63,233.08,174.61,164.81,196,220,146.83];let beat=0;
 function musicStep(){if(!state.music||state.paused||document.hidden)return;let f=melody[beat%melody.length];note(f,.32,0,'triangle',.023);if(beat%4===0)note(f/2,.65,0,'sine',.034);beat++}
-function setMusic(on){state.music=!!on;if(musicTimer)clearInterval(musicTimer);musicTimer=null;if(on){audio();musicStep();musicTimer=setInterval(musicStep,380)}$('#music').textContent=on?'♫ ON':'♫ OFF';$('#music').setAttribute('aria-pressed',String(on))}
+function syncMusicTimer(){if(musicTimer)clearInterval(musicTimer);musicTimer=null;if(state.music&&!state.paused&&!document.hidden){musicStep();musicTimer=setInterval(musicStep,380)}}
+function setMusic(on){state.music=!!on;if(on)audio();syncMusicTimer();$('#music').textContent=on?'♫ ON':'♫ OFF';$('#music').setAttribute('aria-pressed',String(on))}
 function saveBest(){if(state.score>state.best){state.best=state.score;try{localStorage.setItem('haunted-hour-best-v2',String(state.best))}catch{}}}
-function setPause(on){state.paused=!!on;$('#pause').textContent=state.paused?'▶':'⏸';$('#pause').setAttribute('aria-label',state.paused?'Resume game':'Pause game');$('#pause').setAttribute('aria-pressed',String(state.paused))}
+function setPause(on){state.paused=!!on;$('#pause').textContent=state.paused?'▶':'⏸';$('#pause').setAttribute('aria-label',state.paused?'Resume game':'Pause game');$('#pause').setAttribute('aria-pressed',String(state.paused));syncMusicTimer()}
 function setMute(on){state.sound=!on;$('#effects').textContent=on?'🔇 FX':'🔊 FX';$('#effects').setAttribute('aria-pressed',String(!on));if(!on)audio()}
 function hud(){ $('#score').textContent=state.score.toLocaleString();$('#best').textContent='BEST '+state.best.toLocaleString();$('#lv').textContent='LEVEL '+state.level;$('#combo').textContent=state.combo>1?'🔥 '+state.combo+'× combo · '+Math.min(5,1+Math.floor((state.combo-1)/3))+'× multiplier':'Catch creatures to build a combo';let m=missions[state.mission%missions.length];$('#mission').textContent='MISSION: Catch '+m[1]+' '+m[0]+' ('+state.progress+'/'+m[1]+')';$('#progress').style.width=(state.progress/m[1]*100)+'%'}
 function pop(x,y,t){const el=document.createElement('span');el.className='pop';el.textContent=t;el.style.cssText='left:'+x+'px;top:'+y+'px';effects.append(el);setTimeout(()=>el.remove(),900)}
@@ -28,7 +29,7 @@ function tick(now){let dt=Math.min((now-last)/1000,.06);last=now;if(!state.pause
 $('#pause').onclick=()=>setPause(!state.paused);
 $('#effects').onclick=()=>{setMute(state.sound);if(state.sound)note(440)};
 $('#music').onclick=()=>setMusic(!state.music);$('#wave').onclick=()=>{for(let i=0;i<4;i++)spawn()};$('#reset').onclick=()=>{state.score=0;state.combo=0;state.total=0;state.level=1;state.mission=0;state.progress=0;lastCatch=0;spawnClock=0;hud()};
-addEventListener('resize',()=>{W=innerWidth;H=innerHeight});document.addEventListener('visibilitychange',()=>{if(document.hidden&&ctx)void ctx.suspend().catch(()=>{});else if(state.music&&ctx&&!state.paused)void ctx.resume().catch(()=>{})});
+addEventListener('resize',()=>{W=innerWidth;H=innerHeight});document.addEventListener('visibilitychange',()=>{syncMusicTimer();if(document.hidden&&ctx)void ctx.suspend().catch(()=>{});else if(state.music&&ctx&&!state.paused)void ctx.resume().catch(()=>{})});
 if(!reduce){spawn('ghost');spawn('cat')}setPause(reduce);hud();requestAnimationFrame(tick);
 window.__hw={host,spawn,pause:setPause,mute:setMute,music:setMusic,wave:()=>{for(let i=0;i<4;i++)spawn()},reset:()=>$('#reset').click(),get state(){return {...state}}};
 })();
